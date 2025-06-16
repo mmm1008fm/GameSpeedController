@@ -14,6 +14,7 @@ namespace Launcher
         private HotkeyManager hotkeyManager;
         private PipeServer pipeServer;
         private Injector injector;
+        private bool isPaused;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -26,9 +27,13 @@ namespace Launcher
             hotkeyManager = new HotkeyManager();
             pipeServer = new PipeServer();
             injector = new Injector();
+            isPaused = false;
 
             Loaded += MainWindow_Loaded;
             Closing += MainWindow_Closing;
+
+            InjectButton.Click += InjectButton_Click;
+            PauseButton.Click += PauseButton_Click;
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -66,6 +71,37 @@ namespace Launcher
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void InjectButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (ProcessListView.SelectedItem is not ProcessInfo info)
+                return;
+
+            string arch = info.Architecture.ToLower();
+            string dllName = arch == "x64" ? "HookDLL_x64.dll" : "HookDLL_x86.dll";
+            string dllPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                $"Plugins/HookDLL/{arch}", dllName);
+
+            bool manual = ManualMappingCheckBox.IsChecked == true;
+            bool result = injector.InjectDLL(info.Id, dllPath, manual);
+
+            MessageBox.Show(result ? "DLL injected" : "Injection failed");
+        }
+
+        private void PauseButton_Click(object sender, RoutedEventArgs e)
+        {
+            isPaused = !isPaused;
+            if (isPaused)
+            {
+                PauseButton.Content = "Resume";
+                TimeMultiplierSlider.Value = 0.0;
+            }
+            else
+            {
+                PauseButton.Content = "Pause";
+                TimeMultiplierSlider.Value = 1.0;
+            }
         }
     }
 
