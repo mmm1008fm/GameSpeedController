@@ -9,15 +9,16 @@ namespace Launcher
     {
         private NamedPipeServerStream? pipeServer;
         private bool isRunning;
-        private const string PipeName = "TimeScalerPipe";
+        private string? pipeName;
 
         public event EventHandler<string>? MessageReceived;
 
-        public void Start()
+        public void Start(string pipeName)
         {
             if (isRunning)
                 return;
 
+            this.pipeName = pipeName;
             isRunning = true;
             Task.Run(ListenForConnections);
         }
@@ -35,7 +36,10 @@ namespace Launcher
             {
                 try
                 {
-                    using (pipeServer = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+                    if (string.IsNullOrEmpty(pipeName))
+                        throw new InvalidOperationException("Pipe name not set.");
+
+                    using (pipeServer = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
                     {
                         await pipeServer.WaitForConnectionAsync();
 
@@ -53,13 +57,13 @@ namespace Launcher
             }
         }
 
-        public async Task SendMessage(string message)
+        public async Task SendCommand(string cmd)
         {
             if (pipeServer?.IsConnected != true)
                 return;
 
-            var buffer = Encoding.UTF8.GetBytes(message);
+            var buffer = Encoding.UTF8.GetBytes(cmd);
             await pipeServer.WriteAsync(buffer, 0, buffer.Length);
         }
     }
-} 
+}
