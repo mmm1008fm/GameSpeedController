@@ -11,6 +11,7 @@ add_subdirectory(MinHook)
 # Source files for the hook DLL
 set(SOURCES
     src/HookMain.cpp
+    src/HookFunctions.cpp
     src/IPC.cpp
     src/TimeController.cpp
 )
