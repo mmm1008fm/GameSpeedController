@@ -1,5 +1,4 @@
 using System;
-using ManualMapBridge;
 using System.Runtime.InteropServices;
 
 namespace Launcher
@@ -57,9 +56,10 @@ namespace Launcher
             return thread != IntPtr.Zero;
         }
 
-        public static bool InjectManual(int pid, string dllPath)
+        public static bool InjectDLL(int pid, string dllPath)
         {
-            return ManualMapper.Inject(pid, dllPath);
+            // Manual mapping is not supported; fall back to classic injection.
+            return InjectClassic(pid, dllPath);
         }
     }
 }
