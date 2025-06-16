@@ -1,0 +1,30 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.VC.opendb
+
+# Build folders
+[Bb]in/
+[Oo]bj/
+build/
+release/
+
+# C++ (MinHook, CMake)
+CMakeFiles/
+CMakeCache.txt
+*.pdb
+*.obj
+*.lib
+
+# C# / .NET
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+packages/
+
+# OS junk
+Thumbs.db
+Desktop.ini
