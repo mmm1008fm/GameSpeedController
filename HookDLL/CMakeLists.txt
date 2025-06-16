@@ -11,7 +11,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Общие исходные файлы
 set(SOURCES
     src/HookMain.cpp
-    src/HookFunctions.cpp
     src/IPC.cpp
     src/TimeController.cpp
 )
