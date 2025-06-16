@@ -1,28 +1,21 @@
 cmake_minimum_required(VERSION 3.10)
-project(HookDLL)
+project(HookDLL LANGUAGES CXX)
 
-# Добавляем MinHook как подмодуль
-add_subdirectory(MinHook)
-
-# Настройка для x86 и x64 сборок
+# Use C++17 for the DLL
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Общие исходные файлы
+# Include MinHook library
+add_subdirectory(MinHook)
+
+# Source files for the hook DLL
 set(SOURCES
     src/HookMain.cpp
     src/IPC.cpp
     src/TimeController.cpp
 )
 
-# Создаем x86 версию
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:IA32")
-add_library(HookDLL_x86 SHARED ${SOURCES})
-target_include_directories(HookDLL_x86 PRIVATE src)
-target_link_libraries(HookDLL_x86 PRIVATE libMinHook.x86)
-
-# Создаем x64 версию
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
-add_library(HookDLL_x64 SHARED ${SOURCES})
-target_include_directories(HookDLL_x64 PRIVATE src)
-target_link_libraries(HookDLL_x64 PRIVATE libMinHook.x64) 
+# Build a single shared library
+add_library(HookDLL SHARED ${SOURCES})
+target_include_directories(HookDLL PRIVATE src)
+target_link_libraries(HookDLL PRIVATE libMinHook)
