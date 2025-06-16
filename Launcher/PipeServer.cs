@@ -39,16 +39,28 @@ namespace Launcher
                     if (string.IsNullOrEmpty(pipeName))
                         throw new InvalidOperationException("Pipe name not set.");
 
-                    using (pipeServer = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+                    pipeServer = new NamedPipeServerStream(
+                        pipeName,
+                        PipeDirection.InOut,
+                        1,
+                        PipeTransmissionMode.Byte,
+                        PipeOptions.Asynchronous);
+
+                    await pipeServer.WaitForConnectionAsync();
+
+                    var buffer = new byte[1024];
+                    while (isRunning && pipeServer.IsConnected)
                     {
-                        await pipeServer.WaitForConnectionAsync();
-
-                        var buffer = new byte[1024];
                         var bytesRead = await pipeServer.ReadAsync(buffer, 0, buffer.Length);
-                        var message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                        if (bytesRead == 0)
+                            break;
 
+                        var message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                         MessageReceived?.Invoke(this, message);
                     }
+
+                    pipeServer.Dispose();
+                    pipeServer = null;
                 }
                 catch (Exception)
                 {
