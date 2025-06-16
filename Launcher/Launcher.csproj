@@ -18,4 +18,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ManualMapBridge\ManualMapBridge.vcxproj" />
+  </ItemGroup>
+
 </Project> 
