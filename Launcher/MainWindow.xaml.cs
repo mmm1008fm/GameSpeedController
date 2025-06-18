@@ -13,7 +13,6 @@ namespace Launcher
         private ObservableCollection<ProcessInfo> processes;
         private HotkeyManager hotkeyManager;
         private PipeServer pipeServer;
-        private Injector injector;
         private bool isPaused;
         private bool updatingFromPause;
 
@@ -27,7 +26,6 @@ namespace Launcher
 
             hotkeyManager = new HotkeyManager();
             pipeServer = new PipeServer();
-            injector = new Injector();
             isPaused = false;
             updatingFromPause = false;
 
@@ -92,7 +90,7 @@ namespace Launcher
                 $"Plugins/HookDLL/{arch}", dllName);
 
             bool manual = ManualMappingCheckBox.IsChecked == true;
-            bool result = injector.InjectDLL(info.Id, dllPath, manual);
+            bool result = Injector.InjectDLL(info.Id, dllPath, manual);
 
             MessageBox.Show(result ? "DLL injected" : "Injection failed");
         }

@@ -61,5 +61,10 @@ namespace Launcher
         {
             return ManualMapper.Inject(pid, dllPath);
         }
+
+        public static bool InjectDLL(int pid, string dllPath, bool manual)
+        {
+            return manual ? InjectManual(pid, dllPath) : InjectClassic(pid, dllPath);
+        }
     }
 }
