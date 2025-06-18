@@ -15,6 +15,7 @@ namespace Launcher
         private PipeServer pipeServer;
         private Injector injector;
         private bool isPaused;
+        private bool updatingFromPause;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -28,18 +29,25 @@ namespace Launcher
             pipeServer = new PipeServer();
             injector = new Injector();
             isPaused = false;
+            updatingFromPause = false;
 
             Loaded += MainWindow_Loaded;
             Closing += MainWindow_Closing;
 
             InjectButton.Click += InjectButton_Click;
             PauseButton.Click += PauseButton_Click;
+            TimeMultiplierSlider.ValueChanged += TimeMultiplierSlider_ValueChanged;
+
+            hotkeyManager.Increase += Hotkey_Increase;
+            hotkeyManager.Decrease += Hotkey_Decrease;
+            hotkeyManager.TogglePause += Hotkey_TogglePause;
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             RefreshProcessList();
             hotkeyManager.RegisterHotkeys(this);
+            pipeServer.Start("TimePipe");
         }
 
         private void MainWindow_Closing(object sender, CancelEventArgs e)
@@ -89,19 +97,47 @@ namespace Launcher
             MessageBox.Show(result ? "DLL injected" : "Injection failed");
         }
 
-        private void PauseButton_Click(object sender, RoutedEventArgs e)
+        private async void PauseButton_Click(object sender, RoutedEventArgs e)
         {
             isPaused = !isPaused;
             if (isPaused)
             {
                 PauseButton.Content = "Resume";
+                updatingFromPause = true;
                 TimeMultiplierSlider.Value = 0.0;
+                updatingFromPause = false;
             }
             else
             {
                 PauseButton.Content = "Pause";
+                updatingFromPause = true;
                 TimeMultiplierSlider.Value = 1.0;
+                updatingFromPause = false;
             }
+            await pipeServer.SendCommand("RESET");
+        }
+
+        private async void TimeMultiplierSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (updatingFromPause)
+                return;
+
+            await pipeServer.SendCommand($"SET {e.NewValue:F1}");
+        }
+
+        private void Hotkey_Increase(object? sender, EventArgs e)
+        {
+            TimeMultiplierSlider.Value = Math.Min(TimeMultiplierSlider.Value + 0.1, TimeMultiplierSlider.Maximum);
+        }
+
+        private void Hotkey_Decrease(object? sender, EventArgs e)
+        {
+            TimeMultiplierSlider.Value = Math.Max(TimeMultiplierSlider.Value - 0.1, TimeMultiplierSlider.Minimum);
+        }
+
+        private void Hotkey_TogglePause(object? sender, EventArgs e)
+        {
+            PauseButton_Click(sender!, new RoutedEventArgs());
         }
     }
 
