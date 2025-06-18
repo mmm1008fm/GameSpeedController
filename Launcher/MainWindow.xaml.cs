@@ -10,6 +10,8 @@ namespace Launcher
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
+        private const string PipeName = "\\\\.\\pipe\\GameSpeedController";
+
         private ObservableCollection<ProcessInfo> processes;
         private HotkeyManager hotkeyManager;
         private PipeServer pipeServer;
@@ -32,7 +34,15 @@ namespace Launcher
 
             InjectButton.Click += InjectButton_Click;
             PauseButton.Click += PauseButton_Click;
-        }
+
+            TimeMultiplierSlider.ValueChanged += TimeMultiplierSlider_ValueChanged;
+
+            hotkeyManager.Increase += HotkeyManager_Increase;
+            hotkeyManager.Decrease += HotkeyManager_Decrease;
+            hotkeyManager.TogglePause += HotkeyManager_TogglePause;
+
+            pipeServer.MessageReceived += PipeServer_MessageReceived;
+       }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
@@ -83,7 +93,15 @@ namespace Launcher
 
             bool result = Injector.InjectDLL(info.Id, dllPath);
 
-            MessageBox.Show(result ? "DLL injected" : "Injection failed");
+            if (result)
+            {
+                pipeServer.Start(PipeName);
+                MessageBox.Show("DLL injected");
+            }
+            else
+            {
+                MessageBox.Show("Injection failed");
+            }
         }
 
         private void PauseButton_Click(object sender, RoutedEventArgs e)
@@ -93,11 +111,53 @@ namespace Launcher
             {
                 PauseButton.Content = "Resume";
                 TimeMultiplierSlider.Value = 0.0;
+                pipeServer.SendCommand("SET 0.0");
             }
             else
             {
                 PauseButton.Content = "Pause";
                 TimeMultiplierSlider.Value = 1.0;
+                pipeServer.SendCommand("RESET");
+            }
+        }
+
+        private void TimeMultiplierSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (IsLoaded)
+            {
+                string cmd = $"SET {e.NewValue:F2}";
+                pipeServer.SendCommand(cmd);
+            }
+        }
+
+        private void HotkeyManager_Increase(object? sender, EventArgs e)
+        {
+            TimeMultiplierSlider.Value = Math.Min(TimeMultiplierSlider.Maximum, TimeMultiplierSlider.Value + 0.1);
+        }
+
+        private void HotkeyManager_Decrease(object? sender, EventArgs e)
+        {
+            TimeMultiplierSlider.Value = Math.Max(TimeMultiplierSlider.Minimum, TimeMultiplierSlider.Value - 0.1);
+        }
+
+        private void HotkeyManager_TogglePause(object? sender, EventArgs e)
+        {
+            PauseButton_Click(sender!, new RoutedEventArgs());
+        }
+
+        private void PipeServer_MessageReceived(object? sender, string message)
+        {
+            if (message.StartsWith("SET", StringComparison.OrdinalIgnoreCase))
+            {
+                var parts = message.Split(' ');
+                if (parts.Length == 2 && double.TryParse(parts[1], out double val))
+                {
+                    Dispatcher.Invoke(() => TimeMultiplierSlider.Value = val);
+                }
+            }
+            else if (message.StartsWith("RESET", StringComparison.OrdinalIgnoreCase))
+            {
+                Dispatcher.Invoke(() => TimeMultiplierSlider.Value = 1.0);
             }
         }
     }
