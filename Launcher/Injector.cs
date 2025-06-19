@@ -13,6 +13,7 @@ namespace Launcher
 
         private const uint MEM_COMMIT = 0x1000;
         private const uint MEM_RESERVE = 0x2000;
+        private const uint MEM_RELEASE = 0x8000;
         private const uint PAGE_READWRITE = 0x04;
 
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -32,6 +33,12 @@ namespace Launcher
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, out IntPtr lpThreadId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool VirtualFreeEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint dwFreeType);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool CloseHandle(IntPtr hObject);
 
         public static bool InjectClassic(int pid, string dllPath)
         {
@@ -53,7 +60,13 @@ namespace Launcher
                 return false;
 
             IntPtr thread = CreateRemoteThread(process, IntPtr.Zero, 0, loadLibrary, remoteMem, 0, out _);
-            return thread != IntPtr.Zero;
+            bool result = thread != IntPtr.Zero;
+            if (thread != IntPtr.Zero)
+                CloseHandle(thread);
+
+            VirtualFreeEx(process, remoteMem, 0, MEM_RELEASE);
+            CloseHandle(process);
+            return result;
         }
 
         private static bool InjectManual(int pid, string dllPath)
