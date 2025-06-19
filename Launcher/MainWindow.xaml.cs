@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Launcher
 {
@@ -68,7 +69,7 @@ namespace Launcher
                         {
                             Id = process.Id,
                             Name = process.ProcessName,
-                            Architecture = Environment.Is64BitProcess ? "x64" : "x86"
+                            Architecture = GetProcessArchitecture(process)
                         });
                     }
                 }
@@ -160,6 +161,45 @@ namespace Launcher
                 Dispatcher.Invoke(() => TimeMultiplierSlider.Value = 1.0);
             }
         }
+
+        private static string GetProcessArchitecture(Process process)
+        {
+            const ushort IMAGE_FILE_MACHINE_UNKNOWN = 0;
+            const ushort IMAGE_FILE_MACHINE_I386 = 0x014c;
+            const ushort IMAGE_FILE_MACHINE_AMD64 = 0x8664;
+            const ushort IMAGE_FILE_MACHINE_ARM64 = 0xAA64;
+
+            try
+            {
+                if (IsWow64Process2(process.Handle, out ushort processMachine, out ushort nativeMachine))
+                {
+                    ushort machine = processMachine == IMAGE_FILE_MACHINE_UNKNOWN ? nativeMachine : processMachine;
+                    return machine switch
+                    {
+                        IMAGE_FILE_MACHINE_AMD64 => "x64",
+                        IMAGE_FILE_MACHINE_ARM64 => "arm64",
+                        _ => "x86"
+                    };
+                }
+            }
+            catch (EntryPointNotFoundException)
+            {
+                // Fallback to IsWow64Process on older systems
+                if (IsWow64Process(process.Handle, out bool isWow64))
+                    return isWow64 ? "x86" : "x64";
+            }
+            catch
+            {
+            }
+
+            return Environment.Is64BitOperatingSystem ? "x64" : "x86";
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool IsWow64Process(IntPtr hProcess, out bool Wow64Process);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool IsWow64Process2(IntPtr hProcess, out ushort processMachine, out ushort nativeMachine);
     }
 
     public class ProcessInfo
