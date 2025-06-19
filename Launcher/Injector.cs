@@ -56,6 +56,25 @@ namespace Launcher
             return thread != IntPtr.Zero;
         }
 
+        private static bool InjectManual(int pid, string dllPath)
+        {
+            // Call into the bridge DLL which performs manual mapping. The
+            // bridge may not be present or might fail, so wrap the call in a
+            // try/catch and surface success as a boolean.
+            try
+            {
+                return ManualMapBridge.ManualMapper.Inject(pid, dllPath);
+            }
+            catch (DllNotFoundException)
+            {
+                return false;
+            }
+            catch (BadImageFormatException)
+            {
+                return false;
+            }
+        }
+
         public static bool InjectDLL(int pid, string dllPath)
         {
             // Manual mapping is not supported; fall back to classic injection.
