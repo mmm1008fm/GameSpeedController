@@ -5,6 +5,8 @@
 // Оригинальные функции
 VOID (WINAPI *TrueSleep)(DWORD dwMilliseconds) = nullptr;
 BOOL (WINAPI *TrueQueryPerformanceCounter)(LARGE_INTEGER* lpPerformanceCount) = nullptr;
+DWORD (WINAPI *TrueGetTickCount)() = nullptr;
+ULONGLONG (WINAPI *TrueGetTickCount64)() = nullptr;
 
 bool InitializeHooks()
 {
@@ -13,6 +15,24 @@ bool InitializeHooks()
         GetProcAddress(GetModuleHandleA("kernel32.dll"), "Sleep"),
         &HookedSleep,
         reinterpret_cast<LPVOID*>(&TrueSleep)) != MH_OK)
+    {
+        return false;
+    }
+
+    // Хук GetTickCount
+    if (MH_CreateHook(
+        GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetTickCount"),
+        &HookedGetTickCount,
+        reinterpret_cast<LPVOID*>(&TrueGetTickCount)) != MH_OK)
+    {
+        return false;
+    }
+
+    // Хук GetTickCount64
+    if (MH_CreateHook(
+        GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetTickCount64"),
+        &HookedGetTickCount64,
+        reinterpret_cast<LPVOID*>(&TrueGetTickCount64)) != MH_OK)
     {
         return false;
     }
@@ -48,4 +68,14 @@ BOOL WINAPI HookedQueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCount)
             lpPerformanceCount->QuadPart * GetTimeMultiplier());
     }
     return result;
-} 
+}
+
+DWORD WINAPI HookedGetTickCount()
+{
+    return static_cast<DWORD>(TrueGetTickCount() * GetTimeMultiplier());
+}
+
+ULONGLONG WINAPI HookedGetTickCount64()
+{
+    return static_cast<ULONGLONG>(TrueGetTickCount64() * GetTimeMultiplier());
+}
