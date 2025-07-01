@@ -50,6 +50,14 @@ dotnet build -c Release
 
 Run the built `Launcher.exe`. Select a process with a window and press **Inject** to load the DLL (optionally with manual mapping). Adjust the **Time Multiplier** slider or use the hotkeys below to change the game speed.
 
+### Manual mapping
+
+The launcher can attempt to load the DLL without calling `LoadLibrary` in the
+target process. This manual mapping technique is useful when the normal
+injection method fails due to security software or when `LoadLibrary` is
+restricted. If manual mapping is unavailable on the current build, the launcher
+automatically falls back to the classic injection method.
+
 ### Hotkeys
 
 The launcher registers global hotkeys:

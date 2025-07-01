@@ -90,7 +90,9 @@ namespace Launcher
 
         public static bool InjectDLL(int pid, string dllPath)
         {
-            // Manual mapping is not supported; fall back to classic injection.
+            // Attempt manual mapping first and fall back to the classic method
+            if (InjectManual(pid, dllPath))
+                return true;
             return InjectClassic(pid, dllPath);
         }
 
