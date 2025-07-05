@@ -191,10 +191,10 @@ bool ManualMapNative(int pid, const wchar_t* path)
     SIZE_T offset = sizeof(data);
 
     // Copy the loader stub to the remote process
-    SIZE_T stubSize = reinterpret_cast<SIZE_T>(&LoaderStubEnd) -
-                      reinterpret_cast<SIZE_T>(&LoaderStub);
+    SIZE_T stubLength = reinterpret_cast<SIZE_T>(&LoaderStubEnd) -
+                       reinterpret_cast<SIZE_T>(&LoaderStub);
     WriteProcessMemory(process, static_cast<BYTE*>(remoteStub) + offset,
-                       reinterpret_cast<LPCVOID>(&LoaderStub), stubSize, &bytes);
+                       reinterpret_cast<LPCVOID>(&LoaderStub), stubLength, &bytes);
 
     // Calculate remote stub address
     LPTHREAD_START_ROUTINE func = reinterpret_cast<LPTHREAD_START_ROUTINE>(
