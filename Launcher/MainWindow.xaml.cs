@@ -35,6 +35,7 @@ namespace Launcher
 
             InjectButton.Click += InjectButton_Click;
             PauseButton.Click += PauseButton_Click;
+            RefreshButton.Click += RefreshButton_Click;
 
             TimeMultiplierSlider.ValueChanged += TimeMultiplierSlider_ValueChanged;
 
@@ -120,6 +121,11 @@ namespace Launcher
                 TimeMultiplierSlider.Value = 1.0;
                 pipeServer.SendCommand("RESET");
             }
+        }
+
+        private void RefreshButton_Click(object sender, RoutedEventArgs e)
+        {
+            RefreshProcessList();
         }
 
         private void TimeMultiplierSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
