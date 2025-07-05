@@ -55,6 +55,7 @@ namespace Launcher
         private void MainWindow_Closing(object sender, CancelEventArgs e)
         {
             hotkeyManager.UnregisterHotkeys();
+            pipeServer.Stop();
         }
 
         private void RefreshProcessList()
