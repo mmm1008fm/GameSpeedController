@@ -35,7 +35,6 @@ namespace Launcher
 
             InjectButton.Click += InjectButton_Click;
             PauseButton.Click += PauseButton_Click;
-            RefreshButton.Click += RefreshButton_Click;
 
             TimeMultiplierSlider.ValueChanged += TimeMultiplierSlider_ValueChanged;
 
@@ -55,7 +54,6 @@ namespace Launcher
         private void MainWindow_Closing(object sender, CancelEventArgs e)
         {
             hotkeyManager.UnregisterHotkeys();
-            pipeServer.Stop();
         }
 
         private void RefreshProcessList()
@@ -107,34 +105,29 @@ namespace Launcher
             }
         }
 
-        private void PauseButton_Click(object sender, RoutedEventArgs e)
+        private async void PauseButton_Click(object sender, RoutedEventArgs e)
         {
             isPaused = !isPaused;
             if (isPaused)
             {
                 PauseButton.Content = "Resume";
                 TimeMultiplierSlider.Value = 0.0;
-                pipeServer.SendCommand("SET 0.0");
+                await pipeServer.SendCommand("SET 0.0");
             }
             else
             {
                 PauseButton.Content = "Pause";
                 TimeMultiplierSlider.Value = 1.0;
-                pipeServer.SendCommand("RESET");
+                await pipeServer.SendCommand("RESET");
             }
         }
 
-        private void RefreshButton_Click(object sender, RoutedEventArgs e)
-        {
-            RefreshProcessList();
-        }
-
-        private void TimeMultiplierSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private async void TimeMultiplierSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (IsLoaded)
             {
                 string cmd = $"SET {e.NewValue:F2}";
-                pipeServer.SendCommand(cmd);
+                await pipeServer.SendCommand(cmd);
             }
         }
 
