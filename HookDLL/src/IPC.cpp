@@ -48,6 +48,20 @@ bool IPCClient::SendMessage(const std::string& message)
         nullptr) != 0;
 }
 
+bool IPCClient::ReadMessage(std::string& message)
+{
+    if (!m_connected)
+        return false;
+
+    char buffer[1024];
+    DWORD bytesRead = 0;
+    if (!ReadFile(m_pipe, buffer, sizeof(buffer), &bytesRead, nullptr) || bytesRead == 0)
+        return false;
+
+    message.assign(buffer, bytesRead);
+    return true;
+}
+
 bool IPCClient::IsConnected() const
 {
     return m_connected;

@@ -11,6 +11,7 @@ public:
     bool Connect(const std::wstring& pipeName);
     void Disconnect();
     bool SendMessage(const std::string& message);
+    bool ReadMessage(std::string& message);
     bool IsConnected() const;
 
 private:
