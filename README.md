@@ -7,7 +7,13 @@ GameSpeedController is a small experiment for adjusting the speed of Windows app
 - **Visual Studio 2022** with the C++ and .NET desktop workloads
 - **.NET 7 SDK** (required for the WPF launcher)
 - **CMake 3.10** or newer
-- **MinHook** sources placed in `HookDLL/MinHook`
+- **MinHook** submodule in `HookDLL/MinHook`
+
+After cloning the repository, initialize the submodule:
+
+```powershell
+git submodule update --init
+```
 
 ## Building
 
