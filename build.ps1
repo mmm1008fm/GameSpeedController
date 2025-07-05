@@ -1,8 +1,8 @@
 # Ensure MinHook is available
 $minHookPath = "HookDLL/MinHook/MinHook.h"
 if (-not (Test-Path $minHookPath)) {
-    Write-Host "MinHook not found. Cloning from GitHub..."
-    git clone https://github.com/TsudaKageyu/minhook.git "HookDLL/MinHook"
+    Write-Error "MinHook submodule not found. Run 'git submodule update --init' first."
+    exit 1
 }
 
 # Build HookDLL x64
