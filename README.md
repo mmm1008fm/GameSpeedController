@@ -81,3 +81,14 @@ The DLL includes an IPC client that can parse commands received through a named 
 - `RESET` – restore the multiplier to `1.0`
 
 A simple `PipeServer` implementation is provided in the launcher for sending these commands.
+
+## Limitations and troubleshooting
+
+- The injector may require administrator privileges to open the target process.
+  Security software can also block DLL injection. If injection fails, check the
+  debug output for a Win32 error code.
+- The time multiplier is clamped to a maximum of `10.0` to avoid extreme timer
+  values that could destabilize applications.
+- This repository does not yet include a fully configured test environment. A
+  small MSTest project is provided as a starting point, but building it requires
+  the .NET SDK.

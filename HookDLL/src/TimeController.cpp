@@ -28,14 +28,22 @@ bool ParseIPCCommand(const std::string& command)
         double value;
         if (iss >> value)
         {
-            SetTimeMultiplier(value);
-            return true;
+            iss >> std::ws;
+            if (iss.eof() && value >= 0.0 && value <= MAX_TIME_MULTIPLIER)
+            {
+                SetTimeMultiplier(value);
+                return true;
+            }
         }
     }
     else if (action == "RESET")
     {
-        SetTimeMultiplier(1.0);
-        return true;
+        iss >> std::ws;
+        if (iss.eof())
+        {
+            SetTimeMultiplier(1.0);
+            return true;
+        }
     }
 
     return false;

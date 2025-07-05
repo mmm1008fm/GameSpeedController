@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Launcher
@@ -40,6 +41,12 @@ namespace Launcher
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool CloseHandle(IntPtr hObject);
 
+        private static void LogLastError(string message)
+        {
+            int error = Marshal.GetLastWin32Error();
+            Debug.WriteLine($"{message}: 0x{error:X}");
+        }
+
         public static bool InjectClassic(int pid, string dllPath)
         {
             if (string.IsNullOrEmpty(dllPath))
@@ -52,23 +59,38 @@ namespace Launcher
             {
                 process = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, false, pid);
                 if (process == IntPtr.Zero)
+                {
+                    LogLastError("OpenProcess failed");
                     return false;
+                }
 
                 byte[] dllBytes = System.Text.Encoding.ASCII.GetBytes(dllPath + '\0');
                 remoteMem = VirtualAllocEx(process, IntPtr.Zero, (uint)dllBytes.Length, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
                 if (remoteMem == IntPtr.Zero)
+                {
+                    LogLastError("VirtualAllocEx failed");
                     return false;
+                }
 
                 if (!WriteProcessMemory(process, remoteMem, dllBytes, (uint)dllBytes.Length, out _))
+                {
+                    LogLastError("WriteProcessMemory failed");
                     return false;
+                }
 
                 IntPtr kernel32 = GetModuleHandle("kernel32.dll");
                 if (kernel32 == IntPtr.Zero)
+                {
+                    LogLastError("GetModuleHandle failed");
                     return false;
+                }
 
                 IntPtr loadLibrary = GetProcAddress(kernel32, "LoadLibraryA");
                 if (loadLibrary == IntPtr.Zero)
+                {
+                    LogLastError("GetProcAddress failed");
                     return false;
+                }
 
                 IntPtr thread = CreateRemoteThread(process, IntPtr.Zero, 0, loadLibrary, remoteMem, 0, out _);
                 bool result = thread != IntPtr.Zero;
@@ -97,10 +119,12 @@ namespace Launcher
             }
             catch (DllNotFoundException)
             {
+                LogLastError("Manual map bridge not found");
                 return false;
             }
             catch (BadImageFormatException)
             {
+                LogLastError("Manual map bad image");
                 return false;
             }
         }

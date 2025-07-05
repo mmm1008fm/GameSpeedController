@@ -6,6 +6,11 @@
 // Глобальный множитель времени
 extern std::atomic<double> g_timeMultiplier;
 
+// Максимальное допустимое значение множителя времени. Значение
+// 0 отключает таймеры. Слишком большие значения могут привести
+// к нестабильной работе приложения, поэтому вводится ограничение.
+constexpr double MAX_TIME_MULTIPLIER = 10.0;
+
 // Потокобезопасные функции работы с множителем времени
 double GetTimeMultiplier();
 void SetTimeMultiplier(double multiplier);
