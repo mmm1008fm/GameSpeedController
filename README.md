@@ -7,7 +7,7 @@ GameSpeedController is a small experiment for adjusting the speed of Windows app
 - **Visual Studio 2022** with the C++ and .NET desktop workloads
 - **.NET 7 SDK** (required for the WPF launcher)
 - **CMake 3.10** or newer
-- **MinHook** submodule in `HookDLL/MinHook`
+- **MinHook** library bundled in `HookDLL/MinHook`
 
 After cloning the repository, initialize the submodule:
 
@@ -61,8 +61,9 @@ Run the built `Launcher.exe`. Select a process with a window and press **Inject*
 The launcher can attempt to load the DLL without calling `LoadLibrary` in the
 target process. This manual mapping technique is useful when the normal
 injection method fails due to security software or when `LoadLibrary` is
-restricted. If manual mapping is unavailable on the current build, the launcher
-automatically falls back to the classic injection method.
+restricted. The repository now includes a native implementation, so manual
+mapping is performed whenever possible and the launcher falls back to the
+classic method only on failure.
 
 ### Hotkeys
 
