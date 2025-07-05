@@ -42,31 +42,48 @@ namespace Launcher
 
         public static bool InjectClassic(int pid, string dllPath)
         {
-            IntPtr process = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, false, pid);
-            if (process == IntPtr.Zero)
+            if (string.IsNullOrEmpty(dllPath))
                 return false;
 
-            byte[] dllBytes = System.Text.Encoding.ASCII.GetBytes(dllPath + '\0');
-            IntPtr remoteMem = VirtualAllocEx(process, IntPtr.Zero, (uint)dllBytes.Length, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-            if (remoteMem == IntPtr.Zero)
-                return false;
+            IntPtr process = IntPtr.Zero;
+            IntPtr remoteMem = IntPtr.Zero;
 
-            if (!WriteProcessMemory(process, remoteMem, dllBytes, (uint)dllBytes.Length, out _))
-                return false;
+            try
+            {
+                process = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, false, pid);
+                if (process == IntPtr.Zero)
+                    return false;
 
-            IntPtr kernel32 = GetModuleHandle("kernel32.dll");
-            IntPtr loadLibrary = GetProcAddress(kernel32, "LoadLibraryA");
-            if (loadLibrary == IntPtr.Zero)
-                return false;
+                byte[] dllBytes = System.Text.Encoding.ASCII.GetBytes(dllPath + '\0');
+                remoteMem = VirtualAllocEx(process, IntPtr.Zero, (uint)dllBytes.Length, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+                if (remoteMem == IntPtr.Zero)
+                    return false;
 
-            IntPtr thread = CreateRemoteThread(process, IntPtr.Zero, 0, loadLibrary, remoteMem, 0, out _);
-            bool result = thread != IntPtr.Zero;
-            if (thread != IntPtr.Zero)
-                CloseHandle(thread);
+                if (!WriteProcessMemory(process, remoteMem, dllBytes, (uint)dllBytes.Length, out _))
+                    return false;
 
-            VirtualFreeEx(process, remoteMem, 0, MEM_RELEASE);
-            CloseHandle(process);
-            return result;
+                IntPtr kernel32 = GetModuleHandle("kernel32.dll");
+                if (kernel32 == IntPtr.Zero)
+                    return false;
+
+                IntPtr loadLibrary = GetProcAddress(kernel32, "LoadLibraryA");
+                if (loadLibrary == IntPtr.Zero)
+                    return false;
+
+                IntPtr thread = CreateRemoteThread(process, IntPtr.Zero, 0, loadLibrary, remoteMem, 0, out _);
+                bool result = thread != IntPtr.Zero;
+                if (thread != IntPtr.Zero)
+                    CloseHandle(thread);
+
+                return result;
+            }
+            finally
+            {
+                if (remoteMem != IntPtr.Zero)
+                    VirtualFreeEx(process, remoteMem, 0, MEM_RELEASE);
+                if (process != IntPtr.Zero)
+                    CloseHandle(process);
+            }
         }
 
         private static bool InjectManual(int pid, string dllPath)
