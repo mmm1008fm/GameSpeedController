@@ -7,7 +7,6 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <ListView x:Name="ProcessListView" Grid.Row="0" Margin="0,0,0,10">
@@ -40,12 +39,7 @@
             </Grid>
         </StackPanel>
 
-        <StackPanel Grid.Row="2" Margin="0,0,0,10">
-            <TextBlock Text="Hotkey:" Margin="0,0,0,5"/>
-            <TextBox x:Name="HotkeyTextBox" Width="120"/>
-        </StackPanel>
-
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Left">
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left">
             <Button x:Name="InjectButton" Content="Inject" Width="75" Margin="0,0,10,0"/>
             <Button x:Name="PauseButton" Content="Pause" Width="75"/>
         </StackPanel>
