@@ -4,7 +4,9 @@
 
 // Оригинальные функции
 VOID (WINAPI *TrueSleep)(DWORD dwMilliseconds) = nullptr;
+DWORD (WINAPI *TrueSleepEx)(DWORD dwMilliseconds, BOOL bAlertable) = nullptr;
 BOOL (WINAPI *TrueQueryPerformanceCounter)(LARGE_INTEGER* lpPerformanceCount) = nullptr;
+BOOL (WINAPI *TrueQueryPerformanceFrequency)(LARGE_INTEGER* lpFrequency) = nullptr;
 DWORD (WINAPI *TrueGetTickCount)() = nullptr;
 ULONGLONG (WINAPI *TrueGetTickCount64)() = nullptr;
 
@@ -15,6 +17,15 @@ bool InitializeHooks()
         GetProcAddress(GetModuleHandleA("kernel32.dll"), "Sleep"),
         &HookedSleep,
         reinterpret_cast<LPVOID*>(&TrueSleep)) != MH_OK)
+    {
+        return false;
+    }
+
+    // Хук SleepEx
+    if (MH_CreateHook(
+        GetProcAddress(GetModuleHandleA("kernel32.dll"), "SleepEx"),
+        &HookedSleepEx,
+        reinterpret_cast<LPVOID*>(&TrueSleepEx)) != MH_OK)
     {
         return false;
     }
@@ -46,6 +57,15 @@ bool InitializeHooks()
         return false;
     }
 
+    // Хук QueryPerformanceFrequency
+    if (MH_CreateHook(
+        GetProcAddress(GetModuleHandleA("kernel32.dll"), "QueryPerformanceFrequency"),
+        &HookedQueryPerformanceFrequency,
+        reinterpret_cast<LPVOID*>(&TrueQueryPerformanceFrequency)) != MH_OK)
+    {
+        return false;
+    }
+
     return MH_EnableHook(MH_ALL_HOOKS) == MH_OK;
 }
 
@@ -59,6 +79,11 @@ VOID WINAPI HookedSleep(DWORD dwMilliseconds)
     TrueSleep(static_cast<DWORD>(dwMilliseconds * GetTimeMultiplier()));
 }
 
+DWORD WINAPI HookedSleepEx(DWORD dwMilliseconds, BOOL bAlertable)
+{
+    return TrueSleepEx(static_cast<DWORD>(dwMilliseconds * GetTimeMultiplier()), bAlertable);
+}
+
 BOOL WINAPI HookedQueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCount)
 {
     BOOL result = TrueQueryPerformanceCounter(lpPerformanceCount);
@@ -68,6 +93,11 @@ BOOL WINAPI HookedQueryPerformanceCounter(LARGE_INTEGER* lpPerformanceCount)
             lpPerformanceCount->QuadPart * GetTimeMultiplier());
     }
     return result;
+}
+
+BOOL WINAPI HookedQueryPerformanceFrequency(LARGE_INTEGER* lpFrequency)
+{
+    return TrueQueryPerformanceFrequency(lpFrequency);
 }
 
 DWORD WINAPI HookedGetTickCount()
